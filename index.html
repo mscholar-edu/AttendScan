@@ -63,27 +63,6 @@
 :where(code, pre, kbd, samp) {
   font-family: "Optimistic Mono", ui-monospace, monospace;
 }
-</style><style>
-@font-face {
-  font-family: "Optimistic";
-  font-style: normal;
-  font-weight: 400 600;
-  font-display: swap;
-  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Optimistic Mono";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
-}
-:where(html) {
-  font-family: "Optimistic", system-ui, sans-serif;
-}
-:where(code, pre, kbd, samp) {
-  font-family: "Optimistic Mono", ui-monospace, monospace;
-}
 </style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -150,17 +129,11 @@ b, strong, .font-bold, h1, h2, h3, h4, button { font-family: 'Calibri Bold', 'Ca
   box-shadow: 0 12px 40px rgba(22,46,35,0.22), inset 0 1px 0 rgba(255,255,255,0.6);
 }
 
-/* TEXT SHADOWS FOR HEADER */
-.title-shadow {
-  text-shadow: 0 2px 4px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.35), 0 8px 24px rgba(32,65,50,0.4);
-}
-.subtitle-shadow {
-  text-shadow: 0 1px 3px rgba(0,0,0,0.30), 0 2px 8px rgba(0,0,0,0.25), 0 0 20px rgba(0,0,0,0.15);
-}
-.datetime-shadow {
-  text-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 2px 6px rgba(0,0,0,0.20);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.20), 0 2px 8px rgba(32,65,50,0.25) !important;
-}
+/* TEXT SHADOWS */
+.title-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.35), 0 8px 24px rgba(32,65,50,0.4); }
+.subtitle-shadow { text-shadow: 0 1px 3px rgba(0,0,0,0.30), 0 2px 8px rgba(0,0,0,0.25), 0 0 20px rgba(0,0,0,0.15); }
+.datetime-shadow { text-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 2px 6px rgba(0,0,0,0.20); box-shadow: 0 4px 16px rgba(0,0,0,0.20), 0 2px 8px rgba(32,65,50,0.25) !important; }
+
 .dark .glass { 
   background: rgba(32,65,50,0.35);
   border: 1px solid rgba(170,193,179,0.25);
@@ -427,12 +400,45 @@ console.log('✓ Firebase connected to sfnhs-attendance');
   </div>
 </div>
 
-<!-- SAVED -->
+<!-- SAVED - UPGRADED WITH MULTI DOWNLOAD -->
 <div id="page-saved" class="h-full w-full hidden overflow-auto bg-white">
-  <div class="max-w-5xl mx-auto p-4 md:p-6">
+  <div class="max-w-6xl mx-auto p-4 md:p-6">
     <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
-      <h2 class="text-2xl font-bold text-[#204132]">Saved Records</h2><button onclick="showPage('page-teacher')" class="btn-primary px-4 py-2 rounded-lg text-sm font-bold"> <i data-lucide="arrow-left" class="w-4 h-4"></i> Back </button>
+      <h2 class="text-2xl font-bold text-[#204132]">Saved Records</h2>
+      <div class="flex gap-2">
+        <button onclick="showPage('page-teacher')" class="btn-primary px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-1"> <i data-lucide="arrow-left" class="w-4 h-4"></i> Back </button>
+      </div>
     </div>
+
+    <!-- BULK DOWNLOAD BAR -->
+    <div class="bg-[#C8D5CC]/50 border-2 border-[#204132] rounded-2xl p-4 mb-6 shadow-lg">
+      <h3 class="font-bold text-[#204132] text-lg mb-3 flex items-center gap-2"><i data-lucide="download" class="w-5 h-5"></i> Bulk Download</h3>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div>
+          <label class="text-xs font-bold text-[#204132]">Filter by Month:</label>
+          <select id="saved-month-filter" class="w-full px-3 py-2 rounded-lg border-2 border-[#204132] bg-white text-sm font-bold" onchange="filterSavedByMonth()">
+            <option value="all">All Months</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-[#204132]">Choose Format:</label>
+          <select id="saved-bulk-format" class="w-full px-3 py-2 rounded-lg border-2 border-[#204132] bg-white text-sm font-bold">
+            <option value="pdf">PDF (with Present + Absentees)</option>
+            <option value="xlsx">Excel (.xlsx)</option>
+            <option value="csv">CSV</option>
+          </select>
+        </div>
+        <div class="flex items-end gap-2">
+          <button onclick="toggleSelectAllSaved()" class="flex-1 px-3 py-2 rounded-lg border-2 border-[#AAC1B3] text-[#204132] text-sm font-bold">Select All</button>
+          <button onclick="downloadSelectedSaved()" class="flex-1 btn-primary px-3 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-1"><i data-lucide="download" class="w-4 h-4"></i> Download Selected (<span id="selected-count">0</span>)</button>
+        </div>
+        <div class="flex items-end">
+          <button onclick="downloadAllFiltered()" class="w-full bg-[#AAC1B3] text-[#204132] border-2 border-[#204132] px-3 py-2 rounded-lg text-sm font-bold">Download All Filtered as One File</button>
+        </div>
+      </div>
+      <p class="text-[11px] text-[#204132]/60 mt-2 font-bold">Tip: Check the boxes on cards below, then choose format. Or filter by month and download all at once.</p>
+    </div>
+
     <div id="saved-container" class="space-y-4"></div>
     <p id="saved-empty" class="text-[#AAC1B3] text-center py-8 font-bold">No saved records yet</p>
   </div>
@@ -470,22 +476,12 @@ console.log('✓ Firebase connected to sfnhs-attendance');
         <p class="text-[11px] text-[#204132]/60 mt-2 font-bold">If you choose a month, the file will compile ALL days from that month into one file.</p>
       </div>
 
-      <!-- Format Buttons - DIRECT DOWNLOAD -->
+      <!-- Format Buttons -->
       <div class="grid grid-cols-1 gap-3">
         <button onclick="executeSave('csv')" class="w-full px-4 py-3 rounded-xl bg-[#204132] text-white font-bold hover:bg-[#162e23] transition flex items-center justify-center gap-2 border-2 border-[#AAC1B3]"><i data-lucide="file-spreadsheet" class="w-5 h-5"></i> Download as CSV</button>
         <button onclick="executeSave('xlsx')" class="w-full px-4 py-3 rounded-xl bg-[#AAC1B3] text-[#204132] font-bold hover:bg-[#98b0a1] transition flex items-center justify-center gap-2 border-2 border-[#204132]"><i data-lucide="table" class="w-5 h-5"></i> Download as Excel (.xlsx)</button>
         <button onclick="executeSave('pdf')" class="w-full px-4 py-3 rounded-xl bg-white text-[#204132] font-bold hover:bg-gray-50 transition flex items-center justify-center gap-2 border-2 border-[#204132]"><i data-lucide="file-text" class="w-5 h-5"></i> Download as PDF</button>
       </div>
-
-      <div class="relative flex items-center justify-center py-1">
-        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-[#AAC1B3]/50"></div></div>
-        <div class="relative bg-white/80 px-3 text-[11px] font-bold text-[#204132]/50 rounded-full">OR SAVE TO APP</div>
-      </div>
-
-      <!-- SAVE TO RECORDS BUTTON -->
-      <button onclick="saveToRecords()" class="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-[#204132] to-[#2d5a44] text-white font-bold hover:from-[#162e23] hover:to-[#204132] transition flex items-center justify-center gap-2 border-2 border-[#AAC1B3] shadow-lg">
-        <i data-lucide="save" class="w-5 h-5"></i> Save to Records (Saved Button)
-      </button>
 
       <button onclick="closeModal('modal-save-as')" class="w-full px-4 py-3 rounded-lg border-2 border-[#AAC1B3] text-[#204132] font-bold hover:bg-[#AAC1B3]/20 transition">Cancel</button>
     </div>
@@ -525,7 +521,10 @@ console.log('✓ Firebase connected to sfnhs-attendance');
 
 <script>
 // ===== PREDEFINED STUDENTS =====
-const SCHOOL_LOGO_DATA_URL = ``; // Logo removed
+const SCHOOL_LOGO_FILE = "sfnhslogo.png";
+const SCHOOL_LOGO_DATA_URL = "sfnhslogo.png";
+const SCAN_SOUND_FILE = "tethys.mp3";
+const TETHYS_SOUND_FILE = "tethys.mp3";
 const PREDEFINED_CLASSES = [
   {
     name: "GRADE 12 - CHARITY - PR2",
@@ -589,24 +588,30 @@ function initPredefined() {
   }
 }
 
-// ===== FILE SAVE - DIRECT DOWNLOAD (NO SHARE REDIRECT) =====
-function downloadBlobDirect(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  setTimeout(()=>{
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }, 300);
+// ===== FILE SAVE =====
+async function downloadBlobAsDataURL(blob, filename) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const link = document.createElement('a');
+      link.href = reader.result;
+      link.download = filename;
+      document.body.appendChild(link);
+      setTimeout(()=>{ link.click(); setTimeout(()=>{ document.body.removeChild(link); resolve(); }, 100); }, 50);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }
 async function saveGeneratedFile(blob, filename) {
-  // Always download directly - never use navigator.share
-  downloadBlobDirect(blob, filename);
-  showToast(`✓ ${filename} downloaded!`);
+  try {
+    if (navigator.share && navigator.canShare) {
+      const file = new File([blob], filename, { type: blob.type });
+      if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: filename }); return; }
+    }
+  } catch(e){}
+  await downloadBlobAsDataURL(blob, filename);
+  showToast(`✓ ${filename} saved!`);
 }
 
 // ===== INIT =====
@@ -784,9 +789,17 @@ function saveClassNamesAndSchool(){ for(let i=0;i<6;i++){ const input=document.g
 function displaySchoolLogo(){
   const img=document.getElementById('school-logo');
   const icon=document.querySelector('#image-holder i');
-  const effectiveLogo = schoolLogoDataUrl || SCHOOL_LOGO_DATA_URL;
+  const effectiveLogo = schoolLogoDataUrl || SCHOOL_LOGO_DATA_URL || SCHOOL_LOGO_FILE || "sfnhslogo.png";
   if(effectiveLogo){
     img.src=effectiveLogo;
+    img.onerror = function(){
+      if(this.src.indexOf('sfnhslogo.png')!==-1 && this.src.indexOf('?')===-1){
+        this.src = "sfnhslogo.png?v=" + Date.now();
+      } else {
+        this.style.display='none';
+        if(icon) icon.style.display='block';
+      }
+    };
     img.style.display='block';
     if(icon) icon.style.display='none';
   } else {
@@ -809,10 +822,12 @@ function getCompiledRecords(){
   if(period==='today'){
     compiled=Object.values(todayAttendance[classIdx]||{}).map(r=>({...r, className:classNames[classIdx], dateISO:getPHDate()}));
   } else if(period==='all_months'){
+    // today + all history for this class
     const todayRecs=Object.values(todayAttendance[classIdx]||{}).map(r=>({...r, className:classNames[classIdx], dateISO:getPHDate()}));
     const histRecs=historyData.filter(h=>h.classIndex===classIdx).flatMap(h=>h.records.map(r=>({...r, className:h.className, dateISO:h.date})));
     compiled=[...todayRecs, ...histRecs];
   } else {
+    // specific month YYYY-MM
     const todayMonth=getPHDate().substring(0,7);
     if(period===todayMonth){
       const todayRecs=Object.values(todayAttendance[classIdx]||{}).filter(()=>true).map(r=>({...r, dateISO:getPHDate(), className:classNames[classIdx]}));
@@ -820,49 +835,22 @@ function getCompiledRecords(){
     }
     const histRecs=historyData.filter(h=>h.classIndex===classIdx && h.date.startsWith(period)).flatMap(h=>h.records.map(r=>({...r, dateISO:h.date, className:h.className})));
     compiled=compiled.concat(histRecs);
+    // if selected month is current month, include today as well (already handled)
+    if(period===todayMonth){
+      // already added
+    }
   }
   return compiled;
 }
 
-function getAbsenteesList(){
-  const sel=document.getElementById('teacher-class-select'); const classIdx=parseInt(sel?.value||0);
-  const period=document.getElementById('save-period-select')?.value || 'today';
-  const list = studentLists[classIdx] || {};
-  const compiled = getCompiledRecords();
-  let absentees = [];
-  if(period==='today'){
-    const presentNos = new Set(Object.keys(todayAttendance[classIdx]||{}).map(k=>String(k)));
-    for(let i=1;i<=100;i++){
-      const s=list[i];
-      if(!s || !s.name) continue;
-      if(!presentNos.has(String(i))){
-        absentees.push({no:i, name:s.name, gender:s.gender||''});
-      }
-    }
-  } else {
-    const presentNames = new Set(compiled.map(r=> (r.name||'').trim().toLowerCase()));
-    for(let i=1;i<=100;i++){
-      const s=list[i];
-      if(!s || !s.name) continue;
-      if(!presentNames.has(s.name.trim().toLowerCase())){
-        absentees.push({no:i, name:s.name, gender:s.gender||''});
-      }
-    }
-  }
-  return absentees;
-}
-
-// === DOWNLOAD ONLY (NO SHARE, NO AUTO SAVE TO RECORDS) ===
 async function executeSave(format){
   const records=getCompiledRecords();
   const period=document.getElementById('save-period-select').value;
   const sel=document.getElementById('teacher-class-select'); const classIdx=parseInt(sel?.value||0);
   const className=classNames[classIdx]||`CLASS_${classIdx+1}`;
-  const absenteesForCheck = format==='pdf' ? getAbsenteesList() : [];
-  if(!records.length && format!=='pdf'){ showToast('No records found for selected period','warning'); return; }
-  if(!records.length && format==='pdf' && absenteesForCheck.length===0){ showToast('No students found','warning'); return; }
+  if(!records.length){ showToast('No records found for selected period','warning'); return; }
   const periodLabel=period==='today'?`TODAY_${getPHDate()}`:period==='all_months'?'ALL_MONTHS':period;
-  const filename=`${className.replace(/[^a-z0-9]/gi,'_')}_${periodLabel}.${format}`;
+  const filename=`${className}_${periodLabel}.${format}`;
 
   if(format==='csv'){
     let csv='No.,Name,Gender,Date,Time,Class,DateISO\n';
@@ -876,89 +864,20 @@ async function executeSave(format){
     const wbout=XLSX.write(wb,{bookType:'xlsx',type:'array'}); const blob=new Blob([wbout],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     await saveGeneratedFile(blob, filename);
   } else if(format==='pdf'){
-    const absentees = absenteesForCheck.length ? absenteesForCheck : getAbsenteesList();
     const {jsPDF}=window.jspdf; const doc=new jsPDF();
-    doc.setFont('helvetica','bold'); doc.setFontSize(14); 
-    doc.text('ATTENDANCE DAILY LOG - AttendScan',105,14,{align:'center'});
-    doc.setFontSize(11); 
-    doc.text(`${className}`,105,20,{align:'center'});
-    doc.setFont('helvetica','normal'); doc.setFontSize(9);
-    doc.text(`Period: ${periodLabel} | Generated: ${getPHDayDateString()} ${getPHTimeString()}`,105,25,{align:'center'});
-    doc.setFont('helvetica','bold'); doc.setFontSize(10);
-    doc.text(`Present: ${records.length} | Absent: ${absentees.length} | Total Students: ${records.length + absentees.length}`,105,30,{align:'center'});
-    doc.setFont('helvetica','bold'); doc.setFontSize(11);
-    doc.text('PRESENT',14,38);
-    const body=records.map((r,i)=>[i+1, r.name, r.gender, r.date||r.dateISO||'', r.time||'']);
-    doc.autoTable({
-      startY:40, 
-      head:[['#','Name','Gender','Date','Time In']], 
-      body:body, 
-      theme:'grid', 
-      headStyles:{fillColor:[32,65,50], textColor:255, fontStyle:'bold'}, 
-      styles:{fontSize:8, cellPadding:2}, 
-      margin:{left:10,right:10},
-      columnStyles:{0:{cellWidth:10},1:{cellWidth:70},2:{cellWidth:20},3:{cellWidth:40},4:{cellWidth:30}}
-    });
-    let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 8 : 80;
-    doc.setFont('helvetica','bold'); doc.setFontSize(11);
-    if(finalY > 270){ doc.addPage(); finalY = 15; }
-    doc.text('ABSENTEES',14,finalY);
-    finalY += 2;
-    if(absentees.length===0){
-      doc.setFont('helvetica','normal'); doc.setFontSize(9);
-      doc.text('No absentees - All students present!',14,finalY+6);
-    } else {
-      const absBody = absentees.map((a,i)=>[a.no, a.name, a.gender, 'ABSENT']);
-      doc.autoTable({
-        startY:finalY+2,
-        head:[['No.','Name','Gender','Status']],
-        body:absBody,
-        theme:'grid',
-        headStyles:{fillColor:[180,30,30], textColor:255, fontStyle:'bold'},
-        styles:{fontSize:8, cellPadding:2},
-        margin:{left:10,right:10},
-        columnStyles:{0:{cellWidth:15},1:{cellWidth:80},2:{cellWidth:25},3:{cellWidth:30}}
-      });
-    }
-    const pageCount = doc.internal.getNumberOfPages();
-    for(let i=1;i<=pageCount;i++){
-      doc.setPage(i);
-      doc.setFont('helvetica','normal'); doc.setFontSize(7);
-      doc.text(`Page ${i} of ${pageCount} | ${schoolName} - AttendScan`,105,292,{align:'center'});
-    }
+    doc.setFont('Times','bold'); doc.setFontSize(14); doc.text('ATTENDANCE COMPILED REPORT',105,15,{align:'center'});
+    doc.setFontSize(10); doc.text(`Class: ${className} | Period: ${periodLabel}`,105,22,{align:'center'});
+    doc.text(`Generated: ${getPHDayDateString()}`,105,27,{align:'center'});
+    const body=records.map((r,i)=>[i+1,r.name,r.gender,r.date,r.time]);
+    doc.autoTable({startY:32, head:[['No.','Name','Gender','Date','Time']], body:body, theme:'grid', headStyles:{fillColor:[32,65,50]}, styles:{font:'Times', fontSize:9}, margin:{left:10,right:10}});
     const blob=doc.output('blob'); await saveGeneratedFile(blob, filename);
   }
-  closeModal('modal-save-as');
-}
-
-// === SAVE TO RECORDS (SAVED BUTTON) ===
-function saveToRecords(){
-  const records=getCompiledRecords();
-  const absentees=getAbsenteesList();
-  const period=document.getElementById('save-period-select').value;
-  const sel=document.getElementById('teacher-class-select'); const classIdx=parseInt(sel?.value||0);
-  const className=classNames[classIdx]||`CLASS_${classIdx+1}`;
-  if(!records.length && absentees.length===0){ showToast('No records found for selected period','warning'); return; }
-  const periodLabel=period==='today'?`TODAY_${getPHDate()}`:period==='all_months'?'ALL_MONTHS':period;
-  const presentTxt = records.map((r,i)=>`${i+1}. ${r.name} - ${r.gender} - ${r.date} ${r.time} (${r.dateISO||''})`).join('\n');
-  const absentTxt = absentees.map((a,i)=>`${i+1}. #${a.no} ${a.name} - ${a.gender} - ABSENT`).join('\n');
-  const txt=`Class: ${className}\nPeriod: ${periodLabel}\nGenerated: ${getPHDayDateString()} ${getPHTimeString()}\nPresent: ${records.length} | Absent: ${absentees.length} | Total: ${records.length+absentees.length}\n\n--- PRESENT (${records.length}) ---\n${presentTxt}\n\n--- ABSENTEES (${absentees.length}) ---\n${absentTxt||'None'}`;
-  savedTXTRecords.unshift({
-    id:Date.now(), 
-    date:`${periodLabel}`, 
-    dateISO:getPHDate(), 
-    class:className, 
-    totalPresent:records.length, 
-    totalAbsent:absentees.length,
-    content:txt, 
-    createdAt:Date.now(),
-    records: records,
-    absentees: absentees
-  });
+  // also save to saved page for quick access
+  const txt=`Class: ${className}\nPeriod: ${periodLabel}\nTotal: ${records.length}\n\n`+records.map((r,i)=>`${i+1}. ${r.name} - ${r.gender} - ${r.date} ${r.time}`).join('\n');
+  savedTXTRecords.unshift({id:Date.now(), date:`${periodLabel}`, dateISO:getPHDate(), class:className, totalPresent:records.length, content:txt, createdAt:Date.now()});
   saveSavedTXT();
   closeModal('modal-save-as');
-  showToast(`✓ Saved to Records! Present:${records.length} Absent:${absentees.length} - Check Saved button`);
-  setTimeout(()=>{ if(confirm(`Saved! Present: ${records.length}, Absent: ${absentees.length}. Go to Saved Records now?`)) showPage('page-saved'); }, 600);
+  showToast(`✓ ${format.toUpperCase()} compiled (${records.length} records)!`);
 }
 
 function openResetConfirm(){ document.getElementById('modal-reset').classList.remove('hidden'); }
@@ -1038,27 +957,325 @@ async function saveQRCodesToPDF(){
   showToast(`✓ QR Codes PDF saved (${students.length} codes)`);
 }
 
-function renderSavedRecords(){
-
-  const container=document.getElementById('saved-container'); const empty=document.getElementById('saved-empty');
-  if(!savedTXTRecords.length){ container.innerHTML=''; empty.classList.remove('hidden'); return; }
-  empty.classList.add('hidden');
-  container.innerHTML=`<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">${savedTXTRecords.map((r,idx)=>`<div class="bg-[#AAC1B3]/20 border-2 border-[#204132] rounded-lg p-4 flex flex-col"><h3 class="font-bold text-[#204132] text-sm break-words">${escapeHTML(r.class)} - ${r.date}</h3><p class="text-xs font-bold text-[#204132]/70 mt-1">${r.totalPresent} records compiled</p><div class="flex gap-2 mt-3"><button onclick="downloadSavedTXT(${idx})" class="flex-1 bg-[#204132] text-white px-2 py-2 rounded text-xs font-bold">Download</button><button onclick="deleteSavedRecord(${idx})" class="flex-1 bg-red-700 text-white px-2 py-2 rounded text-xs font-bold">Delete</button></div></div>`).join('')}</div>`;
+function getAbsenteesList(){
+  const sel=document.getElementById('teacher-class-select'); const classIdx=parseInt(sel?.value||0);
+  const period=document.getElementById('save-period-select')?.value || 'today';
+  const list = studentLists[classIdx] || {};
+  const compiled = getCompiledRecords();
+  let absentees = [];
+  if(period==='today'){
+    const presentNos = new Set(Object.keys(todayAttendance[classIdx]||{}).map(k=>String(k)));
+    for(let i=1;i<=100;i++){
+      const s=list[i];
+      if(!s || !s.name) continue;
+      if(!presentNos.has(String(i))){
+        absentees.push({no:i, name:s.name, gender:s.gender||''});
+      }
+    }
+  } else {
+    const presentNames = new Set(compiled.map(r=> (r.name||'').trim().toLowerCase()));
+    for(let i=1;i<=100;i++){
+      const s=list[i];
+      if(!s || !s.name) continue;
+      if(!presentNames.has(s.name.trim().toLowerCase())){
+        absentees.push({no:i, name:s.name, gender:s.gender||''});
+      }
+    }
+  }
+  return absentees;
 }
-function downloadSavedTXT(idx){ const r=savedTXTRecords[idx]; if(!r) return; const blob=new Blob([r.content],{type:'text/plain'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`${r.class}_${r.date}.txt`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
-function deleteSavedRecord(idx){ if(confirm('Delete?')){ savedTXTRecords.splice(idx,1); saveSavedTXT(); renderSavedRecords(); } }
+
+function renderSavedRecords(){
+  const container=document.getElementById('saved-container'); 
+  const empty=document.getElementById('saved-empty');
+  const monthFilter = document.getElementById('saved-month-filter');
+  
+  if(monthFilter){
+    const months = new Set();
+    savedTXTRecords.forEach(r=>{
+      if(r.dateISO) months.add(r.dateISO.substring(0,7));
+      else if(r.date && r.date.includes('TODAY_')) months.add((r.dateISO||getPHDate()).substring(0,7));
+      else {
+        const m = (r.date||'').match(/\d{4}-\d{2}/);
+        if(m) months.add(m[0]);
+      }
+    });
+    const currentVal = monthFilter.value;
+    const sortedMonths = Array.from(months).sort().reverse();
+    monthFilter.innerHTML = '<option value="all">All Months</option>';
+    sortedMonths.forEach(m=>{
+      const d=new Date(m+'-01');
+      const label=d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+      monthFilter.innerHTML += `<option value="${m}">${label}</option>`;
+    });
+    if(currentVal) monthFilter.value = currentVal;
+  }
+
+  const filterVal = monthFilter ? monthFilter.value : 'all';
+  let filtered = savedTXTRecords;
+  if(filterVal !== 'all'){
+    filtered = savedTXTRecords.filter(r=>{
+      const iso = r.dateISO || '';
+      return iso.startsWith(filterVal) || (r.date && r.date.includes(filterVal));
+    });
+  }
+
+  if(!filtered.length){
+    if(savedTXTRecords.length===0){
+      container.innerHTML=''; 
+      if(empty) empty.classList.remove('hidden');
+      return;
+    } else {
+      container.innerHTML='<p class="text-center text-[#204132]/60 font-bold py-4">No records for selected month</p>';
+      if(empty) empty.classList.add('hidden');
+      return;
+    }
+  }
+  if(empty) empty.classList.add('hidden');
+  
+  container.innerHTML=`<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">${filtered.map((r)=>{
+    const origIdx = savedTXTRecords.indexOf(r);
+    const present = r.totalPresent || (r.records?r.records.length:0);
+    const absent = r.totalAbsent || (r.absentees?r.absentees.length:0);
+    return `<div class="bg-[#AAC1B3]/20 border-2 border-[#204132] rounded-xl p-4 flex flex-col shadow-md relative">
+      <div class="absolute top-3 left-3">
+        <input type="checkbox" class="saved-checkbox w-5 h-5 accent-[#204132]" data-idx="${origIdx}" onchange="updateSelectedCount()">
+      </div>
+      <div class="ml-8">
+        <h3 class="font-bold text-[#204132] text-sm break-words">${escapeHTML(r.class)} - ${escapeHTML(r.date)}</h3>
+        <p class="text-[11px] font-bold text-[#204132]/70 mt-1">P:${present} A:${absent} | ${r.dateISO||''}</p>
+      </div>
+      <div class="grid grid-cols-3 gap-1 mt-3">
+        <button onclick="downloadSavedAs(${origIdx},'csv')" class="bg-[#204132] text-white px-2 py-2 rounded text-[11px] font-bold">CSV</button>
+        <button onclick="downloadSavedAs(${origIdx},'pdf')" class="bg-white border-2 border-[#204132] text-[#204132] px-2 py-2 rounded text-[11px] font-bold">PDF</button>
+        <button onclick="downloadSavedAs(${origIdx},'xlsx')" class="bg-[#AAC1B3] text-[#204132] border-2 border-[#204132] px-2 py-2 rounded text-[11px] font-bold">Excel</button>
+      </div>
+      <div class="flex gap-2 mt-2">
+        <button onclick="downloadSavedTXT(${origIdx})" class="flex-1 bg-[#2d5a44] text-white px-2 py-2 rounded text-[11px] font-bold">TXT</button>
+        <button onclick="deleteSavedRecord(${origIdx})" class="flex-1 bg-red-700 text-white px-2 py-2 rounded text-[11px] font-bold">Delete</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+  updateSelectedCount();
+  if(window.lucide) lucide.createIcons();
+}
+
+function updateSelectedCount(){
+  const checks = document.querySelectorAll('.saved-checkbox:checked');
+  const el = document.getElementById('selected-count');
+  if(el) el.textContent = checks.length;
+}
+function toggleSelectAllSaved(){
+  const checks = document.querySelectorAll('.saved-checkbox');
+  const allChecked = Array.from(checks).every(c=>c.checked);
+  checks.forEach(c=>c.checked=!allChecked);
+  updateSelectedCount();
+}
+function filterSavedByMonth(){ renderSavedRecords(); }
+function getFilteredSavedRecords(){
+  const monthFilter = document.getElementById('saved-month-filter');
+  const filterVal = monthFilter ? monthFilter.value : 'all';
+  if(filterVal==='all') return savedTXTRecords;
+  return savedTXTRecords.filter(r=>{
+    const iso = r.dateISO || '';
+    return iso.startsWith(filterVal) || (r.date && r.date.includes(filterVal));
+  });
+}
+async function downloadSavedAs(idx, format){
+  const r = savedTXTRecords[idx];
+  if(!r) return;
+  const records = r.records || [];
+  const absentees = r.absentees || [];
+  const className = r.class || 'CLASS';
+  const periodLabel = r.date || r.dateISO || 'RECORD';
+  const filename = `${className.replace(/[^a-z0-9]/gi,'_')}_${periodLabel}.${format}`;
+  if(format==='csv'){
+    let csv='No.,Name,Gender,Date,Time,Class,Status\n';
+    records.forEach((rec,i)=>{ csv+=`${i+1},"${(rec.name||'').replace(/"/g,'""')}","${rec.gender||''}","${rec.date||rec.dateISO||''}","${rec.time||''}","${rec.className||className}","Present"\n`; });
+    absentees.forEach((a,i)=>{ csv+=`${records.length+i+1},"${(a.name||'').replace(/"/g,'""')}","${a.gender||''}","","","${className}","Absent"\n`; });
+    downloadBlobDirect(new Blob([csv],{type:'text/csv'}), filename);
+  } else if(format==='xlsx'){
+    const wsData=[['ATTENDANCE REPORT'],[`Class: ${className}`],[`Period: ${periodLabel}`],[`Generated: ${getPHDayDateString()} ${getPHTimeString()}`],[`Present: ${records.length} | Absent: ${absentees.length}`],[],['No.','Name','Gender','Date','Time','Status']];
+    records.forEach((rec,i)=>wsData.push([i+1, rec.name, rec.gender, rec.date||rec.dateISO||'', rec.time||'', 'Present']));
+    absentees.forEach((a,i)=>wsData.push([records.length+i+1, a.name, a.gender, '', '', 'Absent']));
+    const wb=XLSX.utils.book_new(); const ws=XLSX.utils.aoa_to_sheet(wsData); XLSX.utils.book_append_sheet(wb,ws,'Attendance');
+    const wbout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+    downloadBlobDirect(new Blob([wbout],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), filename);
+  } else if(format==='pdf'){
+    const {jsPDF}=window.jspdf; const doc=new jsPDF();
+    doc.setFont('helvetica','bold'); doc.setFontSize(14); 
+    doc.text('AttendScan - ATTENDANCE REPORT',105,14,{align:'center'});
+    doc.setFontSize(11); doc.text(`${className}`,105,20,{align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    doc.text(`Period: ${periodLabel} | Generated: ${getPHDayDateString()} ${getPHTimeString()}`,105,25,{align:'center'});
+    doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.text(`Present: ${records.length} | Absent: ${absentees.length} | Total: ${records.length + absentees.length}`,105,30,{align:'center'});
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text('PRESENT',14,38);
+    const body=records.map((rec,i)=>[i+1, rec.name||'', rec.gender||'', rec.date||rec.dateISO||'', rec.time||'']);
+    doc.autoTable({startY:40, head:[['#','Name','Gender','Date','Time In']], body:body, theme:'grid', headStyles:{fillColor:[32,65,50], textColor:255}, styles:{fontSize:8}, margin:{left:10,right:10}});
+    let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 8 : 80;
+    if(finalY > 270){ doc.addPage(); finalY = 15; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text('ABSENTEES',14,finalY); finalY+=2;
+    if(absentees.length===0){
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.text('No absentees',14,finalY+6);
+    } else {
+      const absBody = absentees.map((a,i)=>[a.no||i+1, a.name||'', a.gender||'', 'ABSENT']);
+      doc.autoTable({startY:finalY+2, head:[['No.','Name','Gender','Status']], body:absBody, theme:'grid', headStyles:{fillColor:[180,30,30], textColor:255}, styles:{fontSize:8}, margin:{left:10,right:10}});
+    }
+    const blob=doc.output('blob'); downloadBlobDirect(blob, filename);
+  }
+  showToast(`✓ ${format.toUpperCase()} downloaded`);
+}
+function downloadSavedTXT(idx){ 
+  const r=savedTXTRecords[idx]; if(!r) return; 
+  const blob=new Blob([r.content||''],{type:'text/plain'}); 
+  downloadBlobDirect(blob, `${r.class}_${r.date}.txt`);
+}
+async function downloadSelectedSaved(){
+  const checks = document.querySelectorAll('.saved-checkbox:checked');
+  if(!checks.length){ showToast('Select at least one','warning'); return; }
+  const format = document.getElementById('saved-bulk-format')?.value || 'pdf';
+  const indices = Array.from(checks).map(c=>parseInt(c.dataset.idx));
+  if(indices.length===1){ downloadSavedAs(indices[0], format); return; }
+  let allRecords=[], allAbsentees=[], classNamesSet=new Set();
+  indices.forEach(i=>{
+    const r=savedTXTRecords[i];
+    if(!r) return;
+    if(r.records) allRecords = allRecords.concat(r.records.map(rec=>({...rec, sourcePeriod:r.date})));
+    if(r.absentees) allAbsentees = allAbsentees.concat(r.absentees.map(a=>({...a, sourcePeriod:r.date})));
+    if(r.class) classNamesSet.add(r.class);
+  });
+  const classLabel = Array.from(classNamesSet).join('_') || 'COMPILED';
+  const filename = `${classLabel}_SELECTED_${indices.length}records_${getPHDate()}.${format}`;
+  if(format==='csv'){
+    let csv='No.,Name,Gender,Date,Time,Class,Period,Status\n';
+    allRecords.forEach((rec,i)=>{ csv+=`${i+1},"${(rec.name||'').replace(/"/g,'""')}","${rec.gender||''}","${rec.date||''}","${rec.time||''}","${rec.className||''}","${rec.sourcePeriod||''}","Present"\n`; });
+    allAbsentees.forEach((a,i)=>{ csv+=`${allRecords.length+i+1},"${(a.name||'').replace(/"/g,'""')}","${a.gender||''}","","","","${a.sourcePeriod||''}","Absent"\n`; });
+    downloadBlobDirect(new Blob([csv],{type:'text/csv'}), filename);
+  } else if(format==='xlsx'){
+    const wsData=[['COMPILED - SELECTED'],[`Classes: ${Array.from(classNamesSet).join(', ')}`],[`Generated: ${getPHDayDateString()} ${getPHTimeString()}`],[`P:${allRecords.length} A:${allAbsentees.length}`],[],['No.','Name','Gender','Date','Time','Class','Period','Status']];
+    allRecords.forEach((rec,i)=>wsData.push([i+1, rec.name, rec.gender, rec.date||'', rec.time||'', rec.className||'', rec.sourcePeriod||'', 'Present']));
+    allAbsentees.forEach((a,i)=>wsData.push([allRecords.length+i+1, a.name, a.gender, '', '', '', a.sourcePeriod||'', 'Absent']));
+    const wb=XLSX.utils.book_new(); const ws=XLSX.utils.aoa_to_sheet(wsData); XLSX.utils.book_append_sheet(wb,ws,'Compiled');
+    const wbout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+    downloadBlobDirect(new Blob([wbout],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), filename);
+  } else {
+    const {jsPDF}=window.jspdf; const doc=new jsPDF();
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('COMPILED - SELECTED',105,14,{align:'center'});
+    doc.setFontSize(10); doc.text(`Classes: ${Array.from(classNamesSet).join(', ')}`,105,20,{align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.text(`Generated: ${getPHDayDateString()} ${getPHTimeString()} | P:${allRecords.length} A:${allAbsentees.length}`,105,26,{align:'center'});
+    const body=allRecords.map((rec,i)=>[i+1, rec.name||'', rec.gender||'', rec.date||'', rec.time||'', rec.sourcePeriod||'']);
+    doc.autoTable({startY:30, head:[['#','Name','Gender','Date','Time','Period']], body:body, theme:'grid', headStyles:{fillColor:[32,65,50]}, styles:{fontSize:7}, margin:{left:8,right:8}});
+    const blob=doc.output('blob'); downloadBlobDirect(blob, filename);
+  }
+  showToast(`✓ ${indices.length} compiled as ${format.toUpperCase()}`);
+}
+async function downloadAllFiltered(){
+  const filtered = getFilteredSavedRecords();
+  if(!filtered.length){ showToast('No records','warning'); return; }
+  document.querySelectorAll('.saved-checkbox').forEach(cb=>cb.checked=true);
+  updateSelectedCount();
+  downloadSelectedSaved();
+}
+function getFilteredSavedRecords(){
+  const monthFilter = document.getElementById('saved-month-filter');
+  const filterVal = monthFilter ? monthFilter.value : 'all';
+  if(filterVal==='all') return savedTXTRecords;
+  return savedTXTRecords.filter(r=>{
+    const iso = r.dateISO || '';
+    return iso.startsWith(filterVal) || (r.date && r.date.includes(filterVal));
+  });
+}
+function deleteSavedRecord(idx){ 
+  if(!confirm('Delete? This will delete on all phones if synced.')) return;
+  savedTXTRecords.splice(idx,1); 
+  saveSavedTXT(); 
+  renderSavedRecords(); 
+  showToast('Deleted');
+}
+function escapeHTML(str){ return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
 function escapeHTML(str){ return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 init();
 </script>
 <script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script>
-<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script><script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script>
 <script>
-// === FIREBASE SYNC - FULL FUNCTIONAL (Live Attendance + Saved Records) ===
+// === FULL APP SYNC TO FIREBASE - ENTIRE WEB SYNC + LOGO/SOUND FILE LINK ===
+let isSyncingFromFirebase = false;
+let lastFirebaseConfigUpdate = 0;
+const SCHOOL_LOGO_FILE = typeof SCHOOL_LOGO_FILE !== 'undefined' ? SCHOOL_LOGO_FILE : "sfnhslogo.png";
+const SCAN_SOUND_FILE = typeof SCAN_SOUND_FILE !== 'undefined' ? SCAN_SOUND_FILE : "tethys.mp3";
+
+async function saveAppConfigToFirebase(){
+  try{
+    if(typeof db === 'undefined' || isSyncingFromFirebase) return;
+    const now = Date.now();
+    if(now - lastFirebaseConfigUpdate < 2000) return;
+    lastFirebaseConfigUpdate = now;
+    const payload = {
+      classNames: classNames,
+      studentLists: studentLists,
+      schoolName: schoolName,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAtMs: Date.now(),
+      phTimestamp: new Date().toLocaleString('en-PH', {timeZone: 'Asia/Manila'})
+    };
+    try{
+      if(schoolLogoDataUrl && schoolLogoDataUrl.length < 800000) payload.schoolLogoDataUrl = schoolLogoDataUrl;
+      if(scanSoundDataUrl && scanSoundDataUrl.length < 800000) payload.scanSoundDataUrl = scanSoundDataUrl;
+    }catch(e){}
+    await db.collection('app_config').doc('main').set(payload, {merge:true});
+    console.log('✓ App config synced - entire screen will sync');
+  }catch(e){ console.error('saveAppConfig error', e); }
+}
+
+async function loadAppConfigFromFirebase(){
+  try{
+    if(typeof db === 'undefined') return;
+    const doc = await db.collection('app_config').doc('main').get();
+    if(doc.exists){
+      const data = doc.data();
+      if(data){
+        isSyncingFromFirebase = true;
+        let changed=false;
+        if(data.classNames && JSON.stringify(data.classNames) !== JSON.stringify(classNames)){
+          classNames = data.classNames;
+          localStorage.setItem('adl_class_names', JSON.stringify(classNames));
+          changed=true;
+        }
+        if(data.studentLists && JSON.stringify(data.studentLists) !== JSON.stringify(studentLists)){
+          studentLists = data.studentLists;
+          localStorage.setItem('adl_student_lists', JSON.stringify(studentLists));
+          changed=true;
+        }
+        if(data.schoolName && data.schoolName !== schoolName){
+          schoolName = data.schoolName;
+          localStorage.setItem('adl_school_name', schoolName);
+          changed=true;
+        }
+        if(data.schoolLogoDataUrl && data.schoolLogoDataUrl !== schoolLogoDataUrl){
+          schoolLogoDataUrl = data.schoolLogoDataUrl;
+          localStorage.setItem('adl_school_logo', schoolLogoDataUrl);
+          changed=true;
+        }
+        if(changed){
+          renderClassButtons();
+          if(typeof renderCustomize === 'function') renderCustomize();
+          if(typeof displaySchoolLogo === 'function') displaySchoolLogo();
+          showToast('🔄 App synced from other phone!');
+        }
+        setTimeout(()=>{ isSyncingFromFirebase=false; }, 1000);
+      }
+    }
+  }catch(e){ console.error('loadAppConfig error', e); isSyncingFromFirebase=false; }
+}
+
 async function saveToFirebase(classIdx, studentNo, record){
   try{
     if(typeof db === 'undefined') return;
-    const dateStr = new Date().toISOString().split('T')[0];
+    const dateStr = getPHDate();
     const docId = `${dateStr}_class${classIdx}_${studentNo}`;
     await db.collection('attendance_live').doc(docId).set({
       date: dateStr,
@@ -1068,99 +1285,90 @@ async function saveToFirebase(classIdx, studentNo, record){
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       phTimestamp: new Date().toLocaleString('en-PH', {timeZone: 'Asia/Manila'})
     }, {merge:true});
-    console.log('✓ Live attendance synced', docId);
-  }catch(e){ console.error('Firebase live save error', e); }
+  }catch(e){ console.error('live save error', e); }
 }
 
 async function loadFromFirebase(){
   try{
-    if(typeof db === 'undefined') { console.warn('db not ready'); return; }
+    if(typeof db === 'undefined') return;
     const today = getPHDate();
-    // 1. Load today's live attendance
+    await loadAppConfigFromFirebase();
     try{
       const snap = await db.collection('attendance_live').where('date','==',today).get();
+      let changed=false;
       snap.forEach(doc=>{
-        const d = doc.data();
-        const cIdx = parseInt(d.classIndex);
-        const sNo = String(d.studentNo);
-        if(!isNaN(cIdx) && todayAttendance[cIdx]){
-          if(!todayAttendance[cIdx][sNo]){
-            todayAttendance[cIdx][sNo]=d;
-          }
+        const d=doc.data();
+        const cIdx=parseInt(d.classIndex);
+        const sNo=String(d.studentNo);
+        if(!isNaN(cIdx) && todayAttendance[cIdx] && !todayAttendance[cIdx][sNo]){
+          todayAttendance[cIdx][sNo]=d; changed=true;
         }
       });
-      if(snap.size>0){
-        saveTodayAttendance();
-        renderAttendance();
-        renderRecentScans();
-        console.log(`✓ Loaded ${snap.size} live records from Firebase`);
-      }
-    }catch(e){ console.error('Load live error', e); }
-
-    // 2. Load saved_records
+      if(changed){ saveTodayAttendance(); renderAttendance(); if(typeof renderRecentScans==='function') renderRecentScans(); }
+    }catch(e){}
     try{
       let savedSnap;
-      try{
-        savedSnap = await db.collection('saved_records').orderBy('createdAt','desc').get();
-      }catch(e){
-        savedSnap = await db.collection('saved_records').get();
-      }
+      try{ savedSnap = await db.collection('saved_records').orderBy('createdAt','desc').get(); }
+      catch(e){ savedSnap = await db.collection('saved_records').get(); }
       const firebaseSaved=[];
       savedSnap.forEach(doc=>firebaseSaved.push(doc.data()));
       if(firebaseSaved.length>0){
         const existingIds = new Set((savedTXTRecords||[]).map(r=>String(r.id)));
         let added=0;
-        firebaseSaved.forEach(r=>{
-          if(!existingIds.has(String(r.id))){
-            savedTXTRecords.push(r);
-            added++;
-          }
-        });
+        firebaseSaved.forEach(r=>{ if(!existingIds.has(String(r.id))){ savedTXTRecords.push(r); added++; } });
         if(added>0){
           savedTXTRecords.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-          saveSavedTXT();
-          console.log(`✓ Synced ${added} saved records from Firebase`);
-          if(document.getElementById('page-saved') && !document.getElementById('page-saved').classList.contains('hidden')){
-            renderSavedRecords();
-          }
+          saveSavedTXT(); renderSavedRecords();
         }
       }
-    }catch(e){ console.error('Load saved_records error', e); }
-
-    // 3. Real-time listeners
+    }catch(e){}
+    try{
+      db.collection('app_config').doc('main').onSnapshot(doc=>{
+        if(!doc.exists || isSyncingFromFirebase) return;
+        const data=doc.data();
+        if(!data || !data.updatedAtMs) return;
+        if(Date.now() - data.updatedAtMs < 3000) return;
+        isSyncingFromFirebase=true;
+        let changed=false;
+        if(data.classNames && JSON.stringify(data.classNames)!==JSON.stringify(classNames)){
+          classNames=data.classNames; localStorage.setItem('adl_class_names', JSON.stringify(classNames)); changed=true;
+        }
+        if(data.studentLists && JSON.stringify(data.studentLists)!==JSON.stringify(studentLists)){
+          studentLists=data.studentLists; localStorage.setItem('adl_student_lists', JSON.stringify(studentLists)); changed=true;
+        }
+        if(data.schoolName && data.schoolName!==schoolName){
+          schoolName=data.schoolName; localStorage.setItem('adl_school_name', schoolName); changed=true;
+        }
+        if(changed){
+          renderClassButtons(); if(typeof renderCustomize==='function') renderCustomize(); if(typeof displaySchoolLogo==='function') displaySchoolLogo();
+          showToast('🔄 Entire app synced from other phone!');
+        }
+        setTimeout(()=>{ isSyncingFromFirebase=false; }, 1000);
+      });
+    }catch(e){}
     try{
       db.collection('attendance_live').where('date','==',today).onSnapshot(snapshot=>{
         let changed=false;
         snapshot.docChanges().forEach(change=>{
           if(change.type==='added'){
             const d=change.doc.data();
-            const cIdx=parseInt(d.classIndex);
-            const sNo=String(d.studentNo);
+            const cIdx=parseInt(d.classIndex); const sNo=String(d.studentNo);
             if(!isNaN(cIdx) && todayAttendance[cIdx] && !todayAttendance[cIdx][sNo]){
-              todayAttendance[cIdx][sNo]=d;
-              changed=true;
+              todayAttendance[cIdx][sNo]=d; changed=true;
             }
           }
         });
-        if(changed){
-          saveTodayAttendance();
-          renderAttendance();
-          renderRecentScans();
-        }
+        if(changed){ saveTodayAttendance(); renderAttendance(); if(typeof renderRecentScans==='function') renderRecentScans(); }
       });
-    }catch(e){ console.log('live listener error', e); }
-
+    }catch(e){}
     try{
       db.collection('saved_records').onSnapshot(snapshot=>{
         let changed=false;
         snapshot.docChanges().forEach(change=>{
           if(change.type==='added'){
             const r=change.doc.data();
-            const exists = (savedTXTRecords||[]).some(x=>String(x.id)===String(r.id));
-            if(!exists){
-              savedTXTRecords.unshift(r);
-              changed=true;
-              showToast('📥 New Saved Record synced from other phone!');
+            if(!(savedTXTRecords||[]).some(x=>String(x.id)===String(r.id))){
+              savedTXTRecords.unshift(r); changed=true; showToast('📥 New Saved Record synced!');
             }
           }
           if(change.type==='removed'){
@@ -1171,55 +1379,72 @@ async function loadFromFirebase(){
         });
         if(changed){
           savedTXTRecords.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-          saveSavedTXT();
-          renderSavedRecords();
+          saveSavedTXT(); renderSavedRecords();
         }
       });
-    }catch(e){ console.log('saved_records listener error', e); }
-
+    }catch(e){}
   }catch(e){ console.error('loadFromFirebase fatal', e); }
 }
 
-// Hook saveTodayAttendance to also push to Firebase
 (function(){
-  const orig = window.saveTodayAttendance;
+  const origSave = window.saveTodayAttendance;
   window.saveTodayAttendance = function(){
-    if(orig) orig.apply(this, arguments);
+    if(origSave) origSave.apply(this, arguments);
     try{
-      if(typeof todayAttendance !== 'undefined'){
-        todayAttendance.forEach((cls,cIdx)=>{
-          Object.keys(cls||{}).forEach(sNo=>{
-            const rec=cls[sNo];
-            if(rec && rec.name) saveToFirebase(cIdx, sNo, rec);
-          });
+      todayAttendance.forEach((cls,cIdx)=>{
+        Object.keys(cls||{}).forEach(sNo=>{
+          const rec=cls[sNo];
+          if(rec && rec.name) saveToFirebase(cIdx, sNo, rec);
         });
-      }
+      });
     }catch(e){}
   };
 })();
-
-// Hook onScanSuccess to push single record immediately
 (function(){
-  const origScan = window.onScanSuccess;
-  window.onScanSuccess = function(decodedText){
-    const num=parseInt(decodedText.trim());
-    if(isNaN(num)||num<1||num>100){ showToast('Invalid QR','error'); return; }
-    const classAtt=todayAttendance[currentClass];
-    if(classAtt[num]){ showToast('Already recorded','warning'); return; }
-    const student=studentLists[currentClass][num];
-    const name=student&&student.name?student.name:`Student #${num}`;
-    const gender=student&&student.gender?student.gender:'';
-    classAtt[num]={no:num,name,gender,date:getPHDayDateString(),time:getPHTimeString(),timestamp:Date.now()};
-    saveTodayAttendance();
-    saveToFirebase(currentClass, num, classAtt[num]);
-    renderRecentScans(); renderAttendance();
-    document.getElementById('scan-result').textContent=`✓ ${name} - Recorded`;
-    showToast(`${name} checked in!`);
-    if(scanSoundDataUrl){ try{ new Audio(scanSoundDataUrl).play(); }catch(e){} }
+  const origSaveAll = window.saveAll;
+  window.saveAll = function(){
+    if(origSaveAll) origSaveAll.apply(this, arguments);
+    saveAppConfigToFirebase();
+  };
+})();
+(function(){
+  const origSaveClassNames = window.saveClassNamesAndSchool;
+  window.saveClassNamesAndSchool = function(){
+    if(origSaveClassNames) origSaveClassNames.apply(this, arguments);
+    saveAppConfigToFirebase();
+  };
+})();
+(function(){
+  const origUpdateStudent = window.updateStudent;
+  window.updateStudent = function(classIdx,no,field,value){
+    if(origUpdateStudent) origUpdateStudent.apply(this, arguments);
+    clearTimeout(window._studentSaveTimeout);
+    window._studentSaveTimeout = setTimeout(()=>{ saveAppConfigToFirebase(); }, 1500);
   };
 })();
 
-// Override saveToRecords to sync to Firebase
+window.onScanSuccess = function(decodedText){
+  const num=parseInt(decodedText.trim());
+  if(isNaN(num)||num<1||num>100){ showToast('Invalid QR','error'); return; }
+  const classAtt=todayAttendance[currentClass];
+  if(classAtt[num]){ showToast('Already recorded','warning'); return; }
+  const student=studentLists[currentClass][num];
+  const name=student&&student.name?student.name:`Student #${num}`;
+  const gender=student&&student.gender?student.gender:'';
+  classAtt[num]={no:num,name,gender,date:getPHDayDateString(),time:getPHTimeString(),timestamp:Date.now()};
+  saveTodayAttendance();
+  saveToFirebase(currentClass, num, classAtt[num]);
+  if(typeof renderRecentScans==='function') renderRecentScans(); 
+  renderAttendance();
+  const resEl=document.getElementById('scan-result');
+  if(resEl) resEl.textContent=`✓ ${name} - Recorded`;
+  showToast(`${name} checked in!`);
+  try{
+    if(scanSoundDataUrl){ new Audio(scanSoundDataUrl).play().catch(()=>{}); }
+    else { new Audio(SCAN_SOUND_FILE || 'tethys.mp3').play().catch(()=>{ new Audio('tethys.mp3').play().catch(()=>{}); }); }
+  }catch(e){}
+};
+
 window.saveToRecords = async function(){
   const records=getCompiledRecords();
   const absentees=getAbsenteesList();
@@ -1227,11 +1452,11 @@ window.saveToRecords = async function(){
   const sel=document.getElementById('teacher-class-select');
   const classIdx=parseInt(sel?.value||0);
   const className=classNames[classIdx]||`CLASS_${classIdx+1}`;
-  if(!records.length && absentees.length===0){ showToast('No records found for selected period','warning'); return; }
+  if(!records.length && absentees.length===0){ showToast('No records','warning'); return; }
   const periodLabel=period==='today'?`TODAY_${getPHDate()}`:period==='all_months'?'ALL_MONTHS':period;
   const presentTxt = records.map((r,i)=>`${i+1}. ${r.name} - ${r.gender} - ${r.date} ${r.time} (${r.dateISO||''})`).join('\n');
   const absentTxt = absentees.map((a,i)=>`${i+1}. #${a.no} ${a.name} - ${a.gender} - ABSENT`).join('\n');
-  const txt=`Class: ${className}\nPeriod: ${periodLabel}\nGenerated: ${getPHDayDateString()} ${getPHTimeString()}\nPresent: ${records.length} | Absent: ${absentees.length} | Total: ${records.length+absentees.length}\n\n--- PRESENT (${records.length}) ---\n${presentTxt}\n\n--- ABSENTEES (${absentees.length}) ---\n${absentTxt||'None'}`;
+  const txt=`Class: ${className}\nPeriod: ${periodLabel}\nGenerated: ${getPHDayDateString()} ${getPHTimeString()}\nPresent: ${records.length} | Absent: ${absentees.length}\n\n--- PRESENT (${records.length}) ---\n${presentTxt}\n\n--- ABSENTEES (${absentees.length}) ---\n${absentTxt||'None'}`;
   const newRecord={
     id: Date.now(),
     date: periodLabel,
@@ -1251,28 +1476,26 @@ window.saveToRecords = async function(){
   try{
     if(typeof db !== 'undefined'){
       await db.collection('saved_records').doc(String(newRecord.id)).set(newRecord);
-      console.log('✓ Saved record synced to Firebase', newRecord.id);
     }
-  }catch(e){ console.error('Firebase saved_records save error', e); }
+  }catch(e){}
   closeModal('modal-save-as');
-  showToast(`✓ Saved! P:${records.length} A:${absentees.length} - Synced to all phones`);
-  setTimeout(()=>{ if(confirm(`Saved! Present: ${records.length}, Absent: ${absentees.length}. Go to Saved Records now?`)) showPage('page-saved'); }, 500);
+  showToast(`✓ Saved! P:${records.length} A:${absentees.length} - Synced`);
+  setTimeout(()=>{ if(confirm(`Saved! P:${records.length} A:${absentees.length}. Go to Saved Records?`)) showPage('page-saved'); }, 500);
 };
 
-// Override delete to sync
 window.deleteSavedRecord = async function(idx){
   const rec = savedTXTRecords[idx];
   if(!rec) return;
-  if(!confirm('Delete this saved record? This will delete on all phones.')) return;
+  if(!confirm('Delete? This will delete on all phones.')) return;
   try{
     if(typeof db !== 'undefined'){
       await db.collection('saved_records').doc(String(rec.id)).delete();
     }
-  }catch(e){ console.error('Firebase delete error', e); }
+  }catch(e){}
   savedTXTRecords.splice(idx,1);
   saveSavedTXT();
   renderSavedRecords();
-  showToast('Record deleted (synced to all phones)');
+  showToast('Deleted (synced)');
 };
 
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(loadFromFirebase, 1500); });
