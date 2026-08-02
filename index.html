@@ -63,6 +63,27 @@
 :where(code, pre, kbd, samp) {
   font-family: "Optimistic Mono", ui-monospace, monospace;
 }
+</style><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
 </style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -844,10 +865,8 @@ async function executeSave(format){
   const filename=`${className.replace(/[^a-z0-9]/gi,'_')}_${periodLabel}.${format}`;
 
   if(format==='csv'){
-    let csv='No.,Name,Gender,Date,Time,Class,DateISO
-';
-    records.forEach((r,i)=>{ csv+=`${i+1},"${r.name.replace(/"/g,'""')}","${r.gender}","${r.date}","${r.time}","${r.className}","${r.dateISO||''}"
-`; });
+    let csv='No.,Name,Gender,Date,Time,Class,DateISO\n';
+    records.forEach((r,i)=>{ csv+=`${i+1},"${r.name.replace(/"/g,'""')}","${r.gender}","${r.date}","${r.time}","${r.className}","${r.dateISO||''}"\n`; });
     const blob=new Blob([csv],{type:'text/csv'});
     await saveGeneratedFile(blob, filename);
   } else if(format==='xlsx'){
@@ -860,7 +879,7 @@ async function executeSave(format){
     const absentees = absenteesForCheck.length ? absenteesForCheck : getAbsenteesList();
     const {jsPDF}=window.jspdf; const doc=new jsPDF();
     doc.setFont('helvetica','bold'); doc.setFontSize(14); 
-    doc.text('AttendScan - ATTENDANCE DAILY LOG',105,14,{align:'center'});
+    doc.text('ATTENDANCE DAILY LOG - AttendScan',105,14,{align:'center'});
     doc.setFontSize(11); 
     doc.text(`${className}`,105,20,{align:'center'});
     doc.setFont('helvetica','normal'); doc.setFontSize(9);
@@ -912,8 +931,8 @@ async function executeSave(format){
   closeModal('modal-save-as');
 }
 
-// === SAVE TO RECORDS WITH FIREBASE SYNC ===
-async function saveToRecords(){
+// === SAVE TO RECORDS (SAVED BUTTON) ===
+function saveToRecords(){
   const records=getCompiledRecords();
   const absentees=getAbsenteesList();
   const period=document.getElementById('save-period-select').value;
@@ -921,45 +940,24 @@ async function saveToRecords(){
   const className=classNames[classIdx]||`CLASS_${classIdx+1}`;
   if(!records.length && absentees.length===0){ showToast('No records found for selected period','warning'); return; }
   const periodLabel=period==='today'?`TODAY_${getPHDate()}`:period==='all_months'?'ALL_MONTHS':period;
-  const presentTxt = records.map((r,i)=>`${i+1}. ${r.name} - ${r.gender} - ${r.date} ${r.time} (${r.dateISO||''})`).join('
-');
-  const absentTxt = absentees.map((a,i)=>`${i+1}. #${a.no} ${a.name} - ${a.gender} - ABSENT`).join('
-');
-  const txt=`Class: ${className}
-Period: ${periodLabel}
-Generated: ${getPHDayDateString()} ${getPHTimeString()}
-Present: ${records.length} | Absent: ${absentees.length} | Total: ${records.length+absentees.length}
-
---- PRESENT (${records.length}) ---
-${presentTxt}
-
---- ABSENTEES (${absentees.length}) ---
-${absentTxt||'None'}`;
-  const newRecord={
+  const presentTxt = records.map((r,i)=>`${i+1}. ${r.name} - ${r.gender} - ${r.date} ${r.time} (${r.dateISO||''})`).join('\n');
+  const absentTxt = absentees.map((a,i)=>`${i+1}. #${a.no} ${a.name} - ${a.gender} - ABSENT`).join('\n');
+  const txt=`Class: ${className}\nPeriod: ${periodLabel}\nGenerated: ${getPHDayDateString()} ${getPHTimeString()}\nPresent: ${records.length} | Absent: ${absentees.length} | Total: ${records.length+absentees.length}\n\n--- PRESENT (${records.length}) ---\n${presentTxt}\n\n--- ABSENTEES (${absentees.length}) ---\n${absentTxt||'None'}`;
+  savedTXTRecords.unshift({
     id:Date.now(), 
     date:`${periodLabel}`, 
     dateISO:getPHDate(), 
     class:className, 
-    classIndex:classIdx,
     totalPresent:records.length, 
     totalAbsent:absentees.length,
     content:txt, 
     createdAt:Date.now(),
     records: records,
-    absentees: absentees,
-    phTimestamp: new Date().toLocaleString('en-PH', {timeZone: 'Asia/Manila'})
-  };
-  savedTXTRecords.unshift(newRecord);
+    absentees: absentees
+  });
   saveSavedTXT();
-  // === FIREBASE SYNC FOR SAVED RECORDS ===
-  try{
-    if(typeof db !== 'undefined' && db){
-      await db.collection('saved_records').doc(String(newRecord.id)).set(newRecord);
-      console.log('✓ Saved record synced to Firebase', newRecord.id);
-    }
-  }catch(e){ console.error('Firebase saved_records error', e); }
   closeModal('modal-save-as');
-  showToast(`✓ Saved to Records! Present:${records.length} Absent:${absentees.length} - Synced to all phones`);
+  showToast(`✓ Saved to Records! Present:${records.length} Absent:${absentees.length} - Check Saved button`);
   setTimeout(()=>{ if(confirm(`Saved! Present: ${records.length}, Absent: ${absentees.length}. Go to Saved Records now?`)) showPage('page-saved'); }, 600);
 }
 
@@ -1054,45 +1052,62 @@ function escapeHTML(str){ return (str||'').replace(/&/g,'&amp;').replace(/</g,'&
 init();
 </script>
 <script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script><script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script>
 <script>
-// === FIREBASE PERMANENT SYNC - INJECTED (WITH SAVED RECORDS SYNC) ===
+// === FIREBASE SYNC - FULL FUNCTIONAL (Live Attendance + Saved Records) ===
 async function saveToFirebase(classIdx, studentNo, record){
   try{
+    if(typeof db === 'undefined') return;
     const dateStr = new Date().toISOString().split('T')[0];
     const docId = `${dateStr}_class${classIdx}_${studentNo}`;
     await db.collection('attendance_live').doc(docId).set({
       date: dateStr,
       classIndex: classIdx,
-      studentNo: studentNo,
+      studentNo: String(studentNo),
       ...record,
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       phTimestamp: new Date().toLocaleString('en-PH', {timeZone: 'Asia/Manila'})
     }, {merge:true});
-    console.log('✓ Saved to Firebase', docId);
-  }catch(e){ console.error('Firebase save error', e); }
+    console.log('✓ Live attendance synced', docId);
+  }catch(e){ console.error('Firebase live save error', e); }
 }
+
 async function loadFromFirebase(){
   try{
-    const today = new Date().toISOString().split('T')[0];
-    // Load today's attendance
-    const snap = await db.collection('attendance_live').where('date','==',today).get();
-    snap.forEach(doc=>{
-      const d = doc.data();
-      if(window.todayAttendance && typeof d.classIndex !== 'undefined'){
-        if(!window.todayAttendance[d.classIndex]) window.todayAttendance[d.classIndex]={};
-        window.todayAttendance[d.classIndex][d.studentNo]=d;
-      }
-    });
-    console.log('✓ Loaded', snap.size, 'live records from Firebase');
-    if(window.renderAttendance) renderAttendance();
-
-    // Load saved_records (compiled)
+    if(typeof db === 'undefined') { console.warn('db not ready'); return; }
+    const today = getPHDate();
+    // 1. Load today's live attendance
     try{
-      const savedSnap = await db.collection('saved_records').orderBy('createdAt','desc').get();
-      const firebaseSaved = [];
-      savedSnap.forEach(doc=>{ firebaseSaved.push(doc.data()); });
+      const snap = await db.collection('attendance_live').where('date','==',today).get();
+      snap.forEach(doc=>{
+        const d = doc.data();
+        const cIdx = parseInt(d.classIndex);
+        const sNo = String(d.studentNo);
+        if(!isNaN(cIdx) && todayAttendance[cIdx]){
+          if(!todayAttendance[cIdx][sNo]){
+            todayAttendance[cIdx][sNo]=d;
+          }
+        }
+      });
+      if(snap.size>0){
+        saveTodayAttendance();
+        renderAttendance();
+        renderRecentScans();
+        console.log(`✓ Loaded ${snap.size} live records from Firebase`);
+      }
+    }catch(e){ console.error('Load live error', e); }
+
+    // 2. Load saved_records
+    try{
+      let savedSnap;
+      try{
+        savedSnap = await db.collection('saved_records').orderBy('createdAt','desc').get();
+      }catch(e){
+        savedSnap = await db.collection('saved_records').get();
+      }
+      const firebaseSaved=[];
+      savedSnap.forEach(doc=>firebaseSaved.push(doc.data()));
       if(firebaseSaved.length>0){
-        // Merge with local, avoid duplicates by id
         const existingIds = new Set((savedTXTRecords||[]).map(r=>String(r.id)));
         let added=0;
         firebaseSaved.forEach(r=>{
@@ -1101,51 +1116,39 @@ async function loadFromFirebase(){
             added++;
           }
         });
-        // Sort by createdAt desc
-        savedTXTRecords.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
         if(added>0){
-          // Save merged to localStorage
-          try{ localStorage.setItem('adl_saved_txt', JSON.stringify(savedTXTRecords)); }catch(e){}
-          console.log(`✓ Loaded ${savedSnap.size} saved records from Firebase, ${added} new`);
-          if(window.renderSavedRecords) renderSavedRecords();
-        }
-      }
-    }catch(e){ console.log('Saved records load (first time, no index yet)', e.message); 
-      // Fallback without orderBy if index missing
-      try{
-        const snap2 = await db.collection('saved_records').get();
-        const firebaseSaved2=[];
-        snap2.forEach(doc=>firebaseSaved2.push(doc.data()));
-        if(firebaseSaved2.length>0){
-          const existingIds = new Set((savedTXTRecords||[]).map(r=>String(r.id)));
-          let added=0;
-          firebaseSaved2.forEach(r=>{ if(!existingIds.has(String(r.id))){ savedTXTRecords.push(r); added++; } });
           savedTXTRecords.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-          if(added>0){
-            try{ localStorage.setItem('adl_saved_txt', JSON.stringify(savedTXTRecords)); }catch(e){}
-            if(window.renderSavedRecords) renderSavedRecords();
+          saveSavedTXT();
+          console.log(`✓ Synced ${added} saved records from Firebase`);
+          if(document.getElementById('page-saved') && !document.getElementById('page-saved').classList.contains('hidden')){
+            renderSavedRecords();
           }
         }
-      }catch(e2){ console.error('Fallback saved_records load error', e2); }
-    }
+      }
+    }catch(e){ console.error('Load saved_records error', e); }
 
-    // Real-time listeners for other phones
+    // 3. Real-time listeners
     try{
       db.collection('attendance_live').where('date','==',today).onSnapshot(snapshot=>{
+        let changed=false;
         snapshot.docChanges().forEach(change=>{
-          if(change.type==='added' || change.type==='modified'){
+          if(change.type==='added'){
             const d=change.doc.data();
-            if(typeof d.classIndex !== 'undefined' && todayAttendance[d.classIndex]){
-              if(!todayAttendance[d.classIndex][d.studentNo]){
-                todayAttendance[d.classIndex][d.studentNo]=d;
-                if(window.renderAttendance) renderAttendance();
-                console.log('Real-time: new scan from other phone', d);
-              }
+            const cIdx=parseInt(d.classIndex);
+            const sNo=String(d.studentNo);
+            if(!isNaN(cIdx) && todayAttendance[cIdx] && !todayAttendance[cIdx][sNo]){
+              todayAttendance[cIdx][sNo]=d;
+              changed=true;
             }
           }
         });
+        if(changed){
+          saveTodayAttendance();
+          renderAttendance();
+          renderRecentScans();
+        }
       });
-    }catch(e){}
+    }catch(e){ console.log('live listener error', e); }
 
     try{
       db.collection('saved_records').onSnapshot(snapshot=>{
@@ -1157,8 +1160,7 @@ async function loadFromFirebase(){
             if(!exists){
               savedTXTRecords.unshift(r);
               changed=true;
-              console.log('Real-time: new saved record from other phone', r.id);
-              showToast('New Saved Record synced from other phone!');
+              showToast('📥 New Saved Record synced from other phone!');
             }
           }
           if(change.type==='removed'){
@@ -1169,51 +1171,112 @@ async function loadFromFirebase(){
         });
         if(changed){
           savedTXTRecords.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-          try{ localStorage.setItem('adl_saved_txt', JSON.stringify(savedTXTRecords)); }catch(e){}
-          if(window.renderSavedRecords) renderSavedRecords();
+          saveSavedTXT();
+          renderSavedRecords();
         }
       });
     }catch(e){ console.log('saved_records listener error', e); }
 
-  }catch(e){ console.error('Firebase load error', e); }
+  }catch(e){ console.error('loadFromFirebase fatal', e); }
 }
-// Auto load on start
-document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(loadFromFirebase, 1200); });
 
-// Hook into existing save function
-const _origSaveToday = window.saveTodayAttendance;
-if(_origSaveToday){
+// Hook saveTodayAttendance to also push to Firebase
+(function(){
+  const orig = window.saveTodayAttendance;
   window.saveTodayAttendance = function(){
-    _origSaveToday.apply(this, arguments);
-    if(window.todayAttendance){
-      todayAttendance.forEach((cls, cIdx)=>{
-        Object.keys(cls).forEach(sNo=>{
-          if(cls[sNo] && cls[sNo].name) saveToFirebase(cIdx, sNo, cls[sNo]);
+    if(orig) orig.apply(this, arguments);
+    try{
+      if(typeof todayAttendance !== 'undefined'){
+        todayAttendance.forEach((cls,cIdx)=>{
+          Object.keys(cls||{}).forEach(sNo=>{
+            const rec=cls[sNo];
+            if(rec && rec.name) saveToFirebase(cIdx, sNo, rec);
+          });
         });
-      });
-    }
-  }
-}
+      }
+    }catch(e){}
+  };
+})();
 
-// Hook delete to firebase
-const _origDeleteSaved = window.deleteSavedRecord;
+// Hook onScanSuccess to push single record immediately
+(function(){
+  const origScan = window.onScanSuccess;
+  window.onScanSuccess = function(decodedText){
+    const num=parseInt(decodedText.trim());
+    if(isNaN(num)||num<1||num>100){ showToast('Invalid QR','error'); return; }
+    const classAtt=todayAttendance[currentClass];
+    if(classAtt[num]){ showToast('Already recorded','warning'); return; }
+    const student=studentLists[currentClass][num];
+    const name=student&&student.name?student.name:`Student #${num}`;
+    const gender=student&&student.gender?student.gender:'';
+    classAtt[num]={no:num,name,gender,date:getPHDayDateString(),time:getPHTimeString(),timestamp:Date.now()};
+    saveTodayAttendance();
+    saveToFirebase(currentClass, num, classAtt[num]);
+    renderRecentScans(); renderAttendance();
+    document.getElementById('scan-result').textContent=`✓ ${name} - Recorded`;
+    showToast(`${name} checked in!`);
+    if(scanSoundDataUrl){ try{ new Audio(scanSoundDataUrl).play(); }catch(e){} }
+  };
+})();
+
+// Override saveToRecords to sync to Firebase
+window.saveToRecords = async function(){
+  const records=getCompiledRecords();
+  const absentees=getAbsenteesList();
+  const period=document.getElementById('save-period-select').value;
+  const sel=document.getElementById('teacher-class-select');
+  const classIdx=parseInt(sel?.value||0);
+  const className=classNames[classIdx]||`CLASS_${classIdx+1}`;
+  if(!records.length && absentees.length===0){ showToast('No records found for selected period','warning'); return; }
+  const periodLabel=period==='today'?`TODAY_${getPHDate()}`:period==='all_months'?'ALL_MONTHS':period;
+  const presentTxt = records.map((r,i)=>`${i+1}. ${r.name} - ${r.gender} - ${r.date} ${r.time} (${r.dateISO||''})`).join('\n');
+  const absentTxt = absentees.map((a,i)=>`${i+1}. #${a.no} ${a.name} - ${a.gender} - ABSENT`).join('\n');
+  const txt=`Class: ${className}\nPeriod: ${periodLabel}\nGenerated: ${getPHDayDateString()} ${getPHTimeString()}\nPresent: ${records.length} | Absent: ${absentees.length} | Total: ${records.length+absentees.length}\n\n--- PRESENT (${records.length}) ---\n${presentTxt}\n\n--- ABSENTEES (${absentees.length}) ---\n${absentTxt||'None'}`;
+  const newRecord={
+    id: Date.now(),
+    date: periodLabel,
+    dateISO: getPHDate(),
+    class: className,
+    classIndex: classIdx,
+    totalPresent: records.length,
+    totalAbsent: absentees.length,
+    content: txt,
+    createdAt: Date.now(),
+    records: records,
+    absentees: absentees,
+    phTimestamp: new Date().toLocaleString('en-PH', {timeZone: 'Asia/Manila'})
+  };
+  savedTXTRecords.unshift(newRecord);
+  saveSavedTXT();
+  try{
+    if(typeof db !== 'undefined'){
+      await db.collection('saved_records').doc(String(newRecord.id)).set(newRecord);
+      console.log('✓ Saved record synced to Firebase', newRecord.id);
+    }
+  }catch(e){ console.error('Firebase saved_records save error', e); }
+  closeModal('modal-save-as');
+  showToast(`✓ Saved! P:${records.length} A:${absentees.length} - Synced to all phones`);
+  setTimeout(()=>{ if(confirm(`Saved! Present: ${records.length}, Absent: ${absentees.length}. Go to Saved Records now?`)) showPage('page-saved'); }, 500);
+};
+
+// Override delete to sync
 window.deleteSavedRecord = async function(idx){
   const rec = savedTXTRecords[idx];
   if(!rec) return;
   if(!confirm('Delete this saved record? This will delete on all phones.')) return;
   try{
-    if(typeof db !== 'undefined' && db){
+    if(typeof db !== 'undefined'){
       await db.collection('saved_records').doc(String(rec.id)).delete();
-      console.log('✓ Deleted from Firebase', rec.id);
     }
   }catch(e){ console.error('Firebase delete error', e); }
   savedTXTRecords.splice(idx,1);
-  if(typeof saveSavedTXT === 'function') saveSavedTXT();
-  if(typeof renderSavedRecords === 'function') renderSavedRecords();
-  showToast('Record deleted (synced)');
-}
+  saveSavedTXT();
+  renderSavedRecords();
+  showToast('Record deleted (synced to all phones)');
+};
+
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(loadFromFirebase, 1500); });
 </script>
 
-
-<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script><script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
 </html>
